@@ -1,0 +1,57 @@
+function modifyPageUrls(trackingId, urlParams) {
+// get all the anchor tags
+let anchorTags = document.getElementsByTagName('a')
+// loop through the anchor tags and
+for (let i = 0; i < anchorTags.length; i++) {
+  let aTag = anchorTags[i]
+  if (aTag.hasAttribute('href')) {
+    let aUrl = new URL(aTag)
+    aUrl.searchParams.set('tid', trackingId)
+    anchorTags[i].setAttribute('href', aUrl)
+  }
+}
+
+// get all the image tags with a data-imagelink
+let imageLinks = document.querySelectorAll('img[data-imagelink]:not([data-imagelink=""])')
+for (let i = 0; i < imageLinks.length; i++) {
+  let iUrl = new URL(imageLinks[i].getAttribute('data-imagelink'))
+  iUrl.searchParams.set('tid', trackingId)
+  imageLinks[i].setAttribute('data-imagelink', iUrl)
+}
+}
+
+if (typeof url === 'undefined') {
+// get the url
+let url = new URL(document.URL)
+
+// find the cometly parameter... if it doesn't exist, we'll use the utm_campaign param, BUT if tid already exists, then
+// we'll use that instead
+let urlParams = new URLSearchParams(url.search)
+
+// set the tid... if the url already has a tid, we'll use that... otherwise, if it has a cometly key, that's the one we
+// want. But, we'll still accept utm_campaign as a fallback.
+let tid = null
+myStorage = window.localStorage;
+if (myStorage.getItem('tid')) {
+  tid = myStorage.getItem('tid');
+  myStorage.removeItem('tid');
+} else {
+  if (urlParams.has('tid')) {
+    tid = urlParams.get('tid')
+  } else if (urlParams.has('cometly')) {
+    tid = urlParams.get('cometly')
+  } else if (urlParams.has('utm_campaign')) {
+    tid = urlParams.get('utm_campaign')
+  }
+  myStorage.setItem('tid', tid);
+}
+
+// if the tid has a "?" in it, then something happened so we need to replace the "?" with an "&" and reload the page
+if (tid && tid.indexOf('?') > -1) {
+  let decoded_params = decodeURIComponent(urlParams.toString());
+  let new_params = decoded_params.replace('?', '&')
+  url = url.toString().replace(decoded_params, new_params);
+  window.location = url;
+}
+modifyPageUrls(tid, urlParams);
+}
